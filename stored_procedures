@@ -1,0 +1,48 @@
+ALTER PROCEDURE GetCustomerSummary @Country NVARCHAR(50) = 'USA'
+AS
+BEGIN
+	BEGIN TRY
+	DECLARE @TotalCustomer INT;
+	DECLARE @AvgScore FLOAT;
+
+	IF EXISTS (SELECT 1 FROM Sales.Customers WHERE Score IS NULL and Country = @Country)
+	BEGIN
+		Print ('Updating null scores to 0 ')
+		UPDATE Sales.Customers
+		SET Score = 0
+		WHERE Score IS NULL and Country = @Country;
+	END
+
+	ELSE
+		BEGIN
+			Print ('No null scores found')
+		END;
+
+		SELECT 
+			@TotalCustomer = COUNT(*),
+			@AvgScore = AVG(Score)
+		FROM Sales.Customers
+		WHERE Country = @Country;
+
+		PRINT 'Total Customers from ' + @country + ':' + CAST(@TotalCustomer AS NVARCHAR);
+		PRINT 'Average Score from' + @country + ':' + CAST(@AvgScore AS NVARCHAR);
+
+		SELECT
+			COUNT(OrderID) AS TotalOrders,
+			SUM(Sales) TotalSales
+		FROM Sales.Orders o
+		JOIN Sales.Customers c
+		ON c.CustomerID = o.CustomerID
+		WHERE c.Country = @Country;
+		END TRY
+		BEGIN CATCH
+			PRINT 'Error occurred: ' + ERROR_MESSAGE();
+			PRINT 'Error Number: ' + CAST(ERROR_NUMBER() AS NVARCHAR);
+			PRINT 'Error line: ' + CAST(ERROR_LINE() AS NVARCHAR);
+			PRINT 'Error Procedure: ' + Error_Procedure();
+		END CATCH
+	END;
+
+
+EXEC GetCustomerSummary
+EXEC GetCustomerSummary @Country = 'Germany';
